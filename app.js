@@ -22,8 +22,6 @@ const formMode = () =>
 /* Translate every element carrying data-i18n, plus input placeholders. */
 function applyStaticI18n(lang) {
   const doubles = formMode() === "doubles";
-  // side 2's first player is "Player 2" in singles but "Player 3" in doubles
-  $("lbl-name1").dataset.i18n = doubles ? "ui.player3" : "ui.player2";
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     el.textContent = t(lang, el.dataset.i18n);
   });
@@ -31,6 +29,20 @@ function applyStaticI18n(lang) {
   $("name0b").placeholder = t(lang, "ui.player2");
   $("name1").placeholder = t(lang, doubles ? "ui.player3" : "ui.player2");
   $("name1b").placeholder = t(lang, "ui.player4");
+  $("club0").placeholder = t(lang, "ui.clubN", { n: 1 });
+  $("club0b").placeholder = t(lang, "ui.clubN", { n: 2 });
+  $("club1").placeholder = t(lang, "ui.clubN", { n: doubles ? 3 : 2 });
+  $("club1b").placeholder = t(lang, "ui.clubN", { n: 4 });
+}
+
+/* Club label for a side: singles → the club; doubles → the pair's clubs,
+ * joined with " / " when they differ. Old saved states hold plain strings. */
+function clubLabel(config, side) {
+  const c = config.teams?.[side];
+  if (!Array.isArray(c)) return c || "";
+  const [a, b] = c;
+  if (!a || !b || a === b) return a || b || "";
+  return `${a} / ${b}`;
 }
 
 /* ---------- persistence ---------- */
@@ -171,7 +183,7 @@ function renderZone(zone, player) {
     nameEl.classList.toggle("server", live && player === state.server && court === srvCourt);
     nameEl.classList.toggle("receiver", live && player !== state.server && court === srvCourt);
   }
-  const team = state.config.teams?.[player] || "";
+  const team = clubLabel(state.config, player);
   const teamEl = zone.querySelector(".tz-team");
   teamEl.textContent = team;
   teamEl.classList.toggle("hidden", !team);
@@ -270,12 +282,13 @@ function renderOverlay() {
 /* BWF-style pre-match announcement, built from the current sides/server. */
 function openingAnnouncement() {
   const L = uiLang();
-  const { names, teams = [] } = state.config;
+  const { names } = state.config;
   const left = state.leftPlayer;
   if (isDoubles()) {
     const pair = (s) => {
       const joined = `${names[s][0]} ${t(L, "call.and")} ${names[s][1]}`;
-      return teams[s] ? `${joined}, ${teams[s]}` : joined;
+      const club = clubLabel(state.config, s);
+      return club ? `${joined}, ${club}` : joined;
     };
     return t(L, "call.announceDoubles", {
       right: pair(1 - left),
@@ -284,7 +297,10 @@ function openingAnnouncement() {
       receiver: names[1 - state.server][Match.receiverPlayer(state)],
     });
   }
-  const withTeam = (p) => (teams[p] ? `${names[p]}, ${teams[p]}` : names[p]);
+  const withTeam = (p) => {
+    const club = clubLabel(state.config, p);
+    return club ? `${names[p]}, ${club}` : names[p];
+  };
   return t(L, "call.announce", {
     right: withTeam(1 - left),
     left: withTeam(left),
@@ -503,7 +519,13 @@ function initSetup() {
       mode: doubles ? "doubles" : "singles",
       court: $("court-number").value.trim(),
       names: doubles ? [[a, ab], [b, bb]] : [a, b],
-      teams: [$("team0").value.trim(), $("team1").value.trim()],
+      teams: (() => {
+        const c0 = $("club0").value.trim();
+        const c0b = $("same0").checked ? c0 : $("club0b").value.trim();
+        const c1 = $("club1").value.trim();
+        const c1b = $("same1").checked ? c1 : $("club1b").value.trim();
+        return doubles ? [[c0, c0b], [c1, c1b]] : [c0, c1];
+      })(),
       // the form asks who starts on the umpire's RIGHT; match state tracks the left player
       leftPlayer: 1 - Number(document.querySelector('input[name="rightPlayer"]:checked').value),
       lang,
@@ -526,6 +548,14 @@ function initSetup() {
     save();
     showMatch();
   });
+
+  // "Same club": partner's club comes from the first player of the pair
+  const syncSameClub = () => {
+    $("club0b").disabled = $("same0").checked;
+    $("club1b").disabled = $("same1").checked;
+  };
+  $("same0").addEventListener("change", syncSameClub);
+  $("same1").addEventListener("change", syncSameClub);
 
   $("warmup-start").addEventListener("click", () => {
     localStorage.setItem(WARMUP_KEY, String(Date.now() + WARMUP_MS));

@@ -2,7 +2,7 @@
  * Bump CACHE_VERSION whenever any listed file changes, or clients keep
  * the old version.
  */
-const CACHE_VERSION = "badmintonscoresheet-v16";
+const CACHE_VERSION = "badmintonscoresheet-v17";
 const ASSETS = [
   "./",
   "./index.html",

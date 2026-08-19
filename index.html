@@ -26,36 +26,27 @@
       <label class="radio"><input type="radio" name="mode" value="doubles"><span data-i18n="ui.doubles">Doubles</span></label>
     </fieldset>
 
-    <!-- the two sides, side by side with "vs" between them -->
+    <!-- the two sides, side by side with "vs" between them; the inputs
+         carry hint placeholders instead of label titles -->
     <div id="sides">
       <div class="side-col">
-        <label>
-          <span data-i18n="ui.player1">Player 1</span>
-          <input type="text" id="name0" placeholder="Player 1" autocomplete="off">
-        </label>
-        <label class="doubles-only">
-          <span data-i18n="ui.player2">Player 2</span>
-          <input type="text" id="name0b" autocomplete="off">
-        </label>
-        <label>
-          <span data-i18n="ui.team">Team (optional)</span>
-          <input type="text" id="team0" autocomplete="off">
-        </label>
+        <input type="text" id="name0" autocomplete="off">
+        <input type="text" id="club0" autocomplete="off">
+        <input type="text" id="name0b" class="doubles-only" autocomplete="off">
+        <div class="club-row doubles-only">
+          <input type="text" id="club0b" autocomplete="off">
+          <label class="same-club"><input type="checkbox" id="same0"><span data-i18n="ui.sameClub">Same club</span></label>
+        </div>
       </div>
       <div id="vs" data-i18n="ui.vs">vs</div>
       <div class="side-col">
-        <label>
-          <span id="lbl-name1" data-i18n="ui.player2">Player 2</span>
-          <input type="text" id="name1" placeholder="Player 2" autocomplete="off">
-        </label>
-        <label class="doubles-only">
-          <span data-i18n="ui.player4">Player 4</span>
-          <input type="text" id="name1b" autocomplete="off">
-        </label>
-        <label>
-          <span data-i18n="ui.team">Team (optional)</span>
-          <input type="text" id="team1" autocomplete="off">
-        </label>
+        <input type="text" id="name1" autocomplete="off">
+        <input type="text" id="club1" autocomplete="off">
+        <input type="text" id="name1b" class="doubles-only" autocomplete="off">
+        <div class="club-row doubles-only">
+          <input type="text" id="club1b" autocomplete="off">
+          <label class="same-club"><input type="checkbox" id="same1"><span data-i18n="ui.sameClub">Same club</span></label>
+        </div>
       </div>
     </div>
 

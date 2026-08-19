@@ -31,8 +31,18 @@ body {
 #setup-form label { display: flex; flex-direction: column; gap: 0.3rem; font-weight: 600; }
 /* the two sides as columns with "vs" between them */
 #sides { display: flex; align-items: center; gap: 0.6rem; }
-.side-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1.1rem; }
-.side-col input { width: 100%; min-width: 0; }
+.side-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.side-col input[type="text"] { width: 100%; min-width: 0; }
+/* doubles: partner's club input + "Same club" checkbox in one row */
+.club-row { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.club-row input[type="text"] { flex: 1; }
+.same-club {
+  display: flex; flex-direction: row !important; align-items: center;
+  gap: 0.35rem !important; font-weight: 400 !important;
+  font-size: 0.85rem; white-space: nowrap; flex: none;
+}
+.same-club input { width: 1.1rem; height: 1.1rem; }
+#setup-form input[type="text"]:disabled { opacity: 0.45; background: #eee; }
 #vs { font-weight: 800; font-size: 1.2rem; color: var(--green); flex: none; }
 #setup-form input[type="text"], #setup-form select {
   font-size: 1.1rem; padding: 0.6rem 0.7rem;
