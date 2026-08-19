@@ -286,6 +286,12 @@ function openingAnnouncement() {
   const left = state.leftPlayer;
   if (isDoubles()) {
     const pair = (s) => {
+      const c = state.config.teams?.[s];
+      const [ca, cb] = Array.isArray(c) ? c : [c, c];
+      // different clubs: each player announced with their own club
+      if (ca && cb && ca !== cb) {
+        return `${names[s][0]}, ${ca} ${t(L, "call.and")} ${names[s][1]}, ${cb}`;
+      }
       const joined = `${names[s][0]} ${t(L, "call.and")} ${names[s][1]}`;
       const club = clubLabel(state.config, s);
       return club ? `${joined}, ${club}` : joined;
