@@ -8,10 +8,10 @@ const WARMUP_WARN_MS = 30 * 1000; // last 30 s blink red
 /* ---------- settings (persisted independently of the match) ---------- */
 const SETTINGS_KEY = "badmintonscoresheet.settings";
 const DEFAULT_SETTINGS = {
-  gamePoints: 21,
-  maxPoints: 30,
+  gamePoints: 15,
+  maxPoints: 21,
   bestOf: 3,
-  intervalAt: 11,
+  intervalAt: 8,
   warmupSec: 120,
   intervalSec: 60,
   betweenGamesSec: 120,
