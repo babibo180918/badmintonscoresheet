@@ -185,11 +185,9 @@ const Match = {
       state.phase = "interval";
       state.timerEndsAt = Date.now() + RULES.intervalMs;
       call.push(t(L, "call.interval"));
-      // deciding game: players change ends at this interval
-      if (state.gameIndex === 2) {
-        state.leftPlayer = 1 - state.leftPlayer;
-        call.push(t(L, "call.changeEnds"));
-      }
+      // deciding game: announce change of ends; the actual swap happens
+      // when play resumes (see resume())
+      if (state.gameIndex === 2) call.push(t(L, "call.changeEnds"));
     }
 
     state.announcement = call.join("; ");
@@ -200,6 +198,8 @@ const Match = {
   resume(state) {
     if (state.phase !== "interval") return state;
     this._snapshot(state);
+    // deciding game: the sides change ends coming out of this interval
+    if (state.gameIndex === 2) state.leftPlayer = 1 - state.leftPlayer;
     const L = state.config.lang;
     const sw = t(L, "call.scoreWord");
     const sServer = state.score[state.server];
