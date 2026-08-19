@@ -226,7 +226,6 @@ function renderOverlay() {
   const text = $("overlay-text");
   title.classList.remove("hidden");
   $("overlay-doubles").classList.add("hidden");
-  $("overlay-change-ends").classList.add("hidden");
 
   if (state.preMatch) {
     title.textContent = ui("announcementTitle");
@@ -244,12 +243,6 @@ function renderOverlay() {
     // same call as the yellow bar, e.g. "11-6; interval"
     text.textContent = state.announcement;
     text.classList.remove("hidden");
-    // deciding game: players change ends at this interval — say it loudly
-    if (state.gameIndex === 2) {
-      const ce = $("overlay-change-ends");
-      ce.textContent = ui("changeEnds");
-      ce.classList.remove("hidden");
-    }
   } else if (state.phase === "between_games") {
     title.textContent = ui("betweenGamesTitle");
     action.textContent = ui("startNextGame");

@@ -165,7 +165,7 @@ const Match = {
       const phrase = p0 === mp || p1 === mp ? mp : (p0 || p1);
       call.push(
         phrase ? `${sw(sServer)} ${phrase} ${sw(sReceiver)}`
-               : `${sw(sServer)} ${t(L, "call.all")}`
+               : t(L, "call.allScore", { n: sw(sServer) })
       );
     } else {
       const ps = holderPhrase(state.server);
@@ -205,7 +205,7 @@ const Match = {
     const sServer = state.score[state.server];
     const sReceiver = state.score[1 - state.server];
     const scoreText = sServer === sReceiver
-      ? `${sw(sServer)} ${t(L, "call.all")}`
+      ? t(L, "call.allScore", { n: sw(sServer) })
       : `${sw(sServer)}-${sw(sReceiver)}`;
     state.phase = "playing";
     state.timerEndsAt = null;
