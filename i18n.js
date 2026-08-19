@@ -1,0 +1,198 @@
+/* i18n.js — all user-facing strings for Badminton Score Sheet.
+ * To add a language: copy the "en" block, translate, and enable the
+ * <option> in index.html. Score calls are built from these fragments
+ * in match.js, so translating here translates the announcements too.
+ */
+"use strict";
+
+const I18N = {
+  en: {
+    // Score-call fragments (BWF vocabulary)
+    call: {
+      loveAll: "Love all; play",
+      play: "play",
+      serviceOver: "Service over",
+      all: "all",                 // "10 all"
+      interval: "interval",
+      changeEnds: "change ends",
+      gamePoint: "game point",
+      matchPoint: "match point",
+      firstGameWonBy: "First set won by {name}",
+      secondGameWonBy: "Second set won by {name}",
+      oneGameAll: "One game all",
+      matchWonBy: "Match won by {name}\n{scores}",
+      secondGame: "Second game; love all; play",
+      finalGame: "Final game; love all; play",
+      announce: "Ladies and gentlemen!\nOn my right, {right}.\nAnd on my left, {left}.\n{server} to serve.\nLove all, play.",
+      announceDoubles: "Ladies and gentlemen!\nOn my right, {right}.\nAnd on my left, {left}.\n{server} to serve to {receiver}.\nLove all, play.",
+      and: "and",
+      twentySeconds: "Court {court} twenty seconds; court {court} twenty seconds",
+      twentySecondsShort: "Twenty seconds",
+      // 0 is "love" in English calls; other numbers are read as digits
+      scoreWord: (n) => (n === 0 ? "love" : String(n)),
+    },
+    // UI labels
+    ui: {
+      title: "Badminton Score Sheet",
+      courtNumber: "Court number",
+      vs: "vs",
+      matchType: "Match type",
+      singles: "Singles",
+      doubles: "Doubles",
+      player1: "Player 1",
+      player2: "Player 2",
+      player3: "Player 3",
+      player4: "Player 4",
+      team: "Team (optional)",
+      firstServer: "First server",
+      firstReceiver: "First receiver",
+      rightSide: "Starts on umpire's right",
+      language: "Language",
+      startMatch: "Start match",
+      resumeMatch: "Resume previous match",
+      warmUp: "Warm-up",
+      start: "Start",
+      play: "Play",
+      announcementTitle: "Announcement",
+      undo: "Undo",
+      newMatch: "New match",
+      confirmNew: "Abandon the current match and start a new one?",
+      serving: "SERVING",
+      rightCourt: "R",            // serving from right service court
+      leftCourt: "L",
+      intervalTitle: "Interval",
+      betweenGamesTitle: "Set",
+      resumePlay: "Resume play",
+      startNextGame: "Start next game",
+      matchOverTitle: "Game",
+    },
+  },
+
+  vi: {
+    call: {
+      loveAll: "Không đều; bắt đầu",
+      play: "bắt đầu",
+      serviceOver: "Đổi giao cầu",
+      all: "đều",
+      interval: "nghỉ",
+      changeEnds: "đổi sân",
+      gamePoint: "điểm thắng ván",
+      matchPoint: "điểm thắng trận",
+      firstGameWonBy: "Ván một thuộc về {name}",
+      secondGameWonBy: "Ván hai thuộc về {name}",
+      oneGameAll: "Mỗi bên một ván",
+      matchWonBy: "Trận đấu thuộc về {name}\n{scores}",
+      secondGame: "Ván thứ hai; không đều; bắt đầu",
+      finalGame: "Ván quyết định; không đều; bắt đầu",
+      announce: "Kính thưa quý vị!\nBên phải tôi, {right}.\nVà bên trái tôi, {left}.\n{server} giao cầu.\nKhông đều, bắt đầu.",
+      announceDoubles: "Kính thưa quý vị!\nBên phải tôi, {right}.\nVà bên trái tôi, {left}.\n{server} giao cầu cho {receiver}.\nKhông đều, bắt đầu.",
+      and: "và",
+      twentySeconds: "Sân {court}, còn hai mươi giây; sân {court}, còn hai mươi giây",
+      twentySecondsShort: "Còn hai mươi giây",
+      scoreWord: (n) => (n === 0 ? "không" : String(n)),
+    },
+    ui: {
+      title: "Badminton Score Sheet",
+      courtNumber: "Sân số",
+      vs: "vs",
+      matchType: "Thể thức",
+      singles: "Đơn",
+      doubles: "Đôi",
+      player1: "Người chơi 1",
+      player2: "Người chơi 2",
+      player3: "Người chơi 3",
+      player4: "Người chơi 4",
+      team: "Đội (không bắt buộc)",
+      firstServer: "Giao cầu trước",
+      firstReceiver: "Nhận cầu trước",
+      rightSide: "Bắt đầu bên phải trọng tài",
+      language: "Ngôn ngữ",
+      startMatch: "Bắt đầu trận đấu",
+      resumeMatch: "Tiếp tục trận trước",
+      warmUp: "Khởi động",
+      start: "Bắt đầu",
+      play: "Vào trận",
+      announcementTitle: "Thông báo",
+      undo: "Hoàn tác",
+      newMatch: "Trận mới",
+      confirmNew: "Bỏ trận hiện tại và bắt đầu trận mới?",
+      serving: "GIAO CẦU",
+      rightCourt: "P",           // ô phải
+      leftCourt: "T",            // ô trái
+      intervalTitle: "Nghỉ",
+      betweenGamesTitle: "Ván",
+      resumePlay: "Tiếp tục",
+      startNextGame: "Bắt đầu ván tiếp theo",
+      matchOverTitle: "Ván",
+    },
+  },
+
+  da: {
+    call: {
+      loveAll: "Nul lige; spil",
+      play: "spil",
+      serviceOver: "Serveskift",
+      all: "lige",
+      interval: "pause",
+      changeEnds: "skift side",
+      gamePoint: "sætbold",
+      matchPoint: "matchbold",
+      firstGameWonBy: "Første sæt vundet af {name}",
+      secondGameWonBy: "Andet sæt vundet af {name}",
+      oneGameAll: "Et sæt til hver",
+      matchWonBy: "Kampen vundet af {name}\n{scores}",
+      secondGame: "Andet sæt; nul lige; spil",
+      finalGame: "Afgørende sæt; nul lige; spil",
+      announce: "Mine damer og herrer!\nPå min højre side, {right}.\nOg på min venstre side, {left}.\n{server} server.\nNul lige, spil.",
+      announceDoubles: "Mine damer og herrer!\nPå min højre side, {right}.\nOg på min venstre side, {left}.\n{server} server til {receiver}.\nNul lige, spil.",
+      and: "og",
+      twentySeconds: "Bane {court}, tyve sekunder; bane {court}, tyve sekunder",
+      twentySecondsShort: "Tyve sekunder",
+      scoreWord: (n) => (n === 0 ? "nul" : String(n)),
+    },
+    ui: {
+      title: "Badminton Score Sheet",
+      courtNumber: "Banenummer",
+      vs: "vs",
+      matchType: "Kamptype",
+      singles: "Single",
+      doubles: "Double",
+      player1: "Spiller 1",
+      player2: "Spiller 2",
+      player3: "Spiller 3",
+      player4: "Spiller 4",
+      team: "Hold (valgfrit)",
+      firstServer: "Første server",
+      firstReceiver: "Første modtager",
+      rightSide: "Starter til højre for dommeren",
+      language: "Sprog",
+      startMatch: "Start kamp",
+      resumeMatch: "Genoptag forrige kamp",
+      warmUp: "Opvarmning",
+      start: "Start",
+      play: "Spil",
+      announcementTitle: "Meddelelse",
+      undo: "Fortryd",
+      newMatch: "Ny kamp",
+      confirmNew: "Afbryd den nuværende kamp og start en ny?",
+      serving: "SERVER",
+      rightCourt: "H",           // højre servefelt
+      leftCourt: "V",            // venstre servefelt
+      intervalTitle: "Pause",
+      betweenGamesTitle: "Sæt",
+      resumePlay: "Fortsæt spillet",
+      startNextGame: "Start næste sæt",
+      matchOverTitle: "Sæt",
+    },
+  },
+};
+
+/* t('en', 'ui.undo') or t('en', 'call.firstGameWonBy', {name: 'X'}) */
+function t(lang, path, vars) {
+  let node = I18N[lang] || I18N.en;
+  for (const p of path.split(".")) node = node[p];
+  if (typeof node === "string" && vars) {
+    return node.replace(/\{(\w+)\}/g, (_, k) => vars[k]);
+  }
+  return node;
+}

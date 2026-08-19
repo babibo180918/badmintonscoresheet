@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a5c3a">
+<title>Badminton Score Sheet</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== Setup screen ===== -->
+<section id="setup" class="screen">
+  <h1 data-i18n="ui.title">Badminton Score Sheet</h1>
+  <form id="setup-form">
+    <label>
+      <span data-i18n="ui.courtNumber">Court number</span>
+      <input type="text" id="court-number" inputmode="numeric" autocomplete="off">
+    </label>
+
+    <fieldset>
+      <legend data-i18n="ui.matchType">Match type</legend>
+      <label class="radio"><input type="radio" name="mode" value="singles" checked><span data-i18n="ui.singles">Singles</span></label>
+      <label class="radio"><input type="radio" name="mode" value="doubles"><span data-i18n="ui.doubles">Doubles</span></label>
+    </fieldset>
+
+    <!-- the two sides, side by side with "vs" between them -->
+    <div id="sides">
+      <div class="side-col">
+        <label>
+          <span data-i18n="ui.player1">Player 1</span>
+          <input type="text" id="name0" placeholder="Player 1" autocomplete="off">
+        </label>
+        <label class="doubles-only">
+          <span data-i18n="ui.player2">Player 2</span>
+          <input type="text" id="name0b" autocomplete="off">
+        </label>
+        <label>
+          <span data-i18n="ui.team">Team (optional)</span>
+          <input type="text" id="team0" autocomplete="off">
+        </label>
+      </div>
+      <div id="vs" data-i18n="ui.vs">vs</div>
+      <div class="side-col">
+        <label>
+          <span id="lbl-name1" data-i18n="ui.player2">Player 2</span>
+          <input type="text" id="name1" placeholder="Player 2" autocomplete="off">
+        </label>
+        <label class="doubles-only">
+          <span data-i18n="ui.player4">Player 4</span>
+          <input type="text" id="name1b" autocomplete="off">
+        </label>
+        <label>
+          <span data-i18n="ui.team">Team (optional)</span>
+          <input type="text" id="team1" autocomplete="off">
+        </label>
+      </div>
+    </div>
+
+    <fieldset class="singles-only">
+      <legend data-i18n="ui.firstServer">First server</legend>
+      <label class="radio"><input type="radio" name="firstServer" value="0" checked><span id="fs0">Player 1</span></label>
+      <label class="radio"><input type="radio" name="firstServer" value="1"><span id="fs1">Player 2</span></label>
+    </fieldset>
+
+    <fieldset class="doubles-only">
+      <legend data-i18n="ui.firstServer">First server</legend>
+      <label class="radio"><input type="radio" name="dblServer" value="0-0" checked><span id="ds00">Player 1</span></label>
+      <label class="radio"><input type="radio" name="dblServer" value="0-1"><span id="ds01">Player 2</span></label>
+      <label class="radio"><input type="radio" name="dblServer" value="1-0"><span id="ds10">Player 3</span></label>
+      <label class="radio"><input type="radio" name="dblServer" value="1-1"><span id="ds11">Player 4</span></label>
+    </fieldset>
+
+    <fieldset class="doubles-only">
+      <legend data-i18n="ui.firstReceiver">First receiver</legend>
+      <label class="radio"><input type="radio" name="dblReceiver" value="0" checked><span id="dr0">Player 3</span></label>
+      <label class="radio"><input type="radio" name="dblReceiver" value="1"><span id="dr1">Player 4</span></label>
+    </fieldset>
+
+    <fieldset>
+      <legend data-i18n="ui.rightSide">Starts on umpire's right</legend>
+      <label class="radio"><input type="radio" name="rightPlayer" value="0" checked><span id="rs0">Player 1</span></label>
+      <label class="radio"><input type="radio" name="rightPlayer" value="1"><span id="rs1">Player 2</span></label>
+    </fieldset>
+
+    <div id="warmup">
+      <span data-i18n="ui.warmUp">Warm-up</span>
+      <span id="warmup-time">2:00</span>
+      <button type="button" id="warmup-start" class="secondary" data-i18n="ui.start">Start</button>
+    </div>
+
+    <label>
+      <span data-i18n="ui.language">Language</span>
+      <select id="lang">
+        <option value="en" selected>English</option>
+        <option value="vi">Tiếng Việt</option>
+        <option value="da">Dansk</option>
+      </select>
+    </label>
+
+    <button type="submit" class="primary" data-i18n="ui.startMatch">Start match</button>
+  </form>
+  <button id="resume-match" class="secondary hidden" data-i18n="ui.resumeMatch">Resume previous match</button>
+</section>
+
+<!-- ===== Match screen ===== -->
+<section id="match" class="screen hidden">
+  <header id="topbar">
+    <button id="btn-undo" title="Undo">&#8630; <span data-i18n="ui.undo">Undo</span></button>
+    <div id="games-summary"></div>
+    <div id="match-clock"></div>
+    <button id="btn-new" title="New match" data-i18n="ui.newMatch">New match</button>
+  </header>
+
+  <div id="announcement" aria-live="polite"></div>
+
+  <main id="court">
+    <button class="tapzone" id="zone-left">
+      <div class="tz-name"></div>
+      <div class="tz-team hidden"></div>
+      <div class="tz-score">0</div>
+      <div class="tz-serve hidden"></div>
+      <div class="tz-games"></div>
+    </button>
+    <button class="tapzone" id="zone-right">
+      <div class="tz-name"></div>
+      <div class="tz-team hidden"></div>
+      <div class="tz-score">0</div>
+      <div class="tz-serve hidden"></div>
+      <div class="tz-games"></div>
+    </button>
+  </main>
+
+  <!-- Interval / between-games overlay -->
+  <div id="overlay" class="hidden">
+    <div id="overlay-box">
+      <div id="overlay-title"></div>
+      <div id="overlay-text" class="hidden"></div>
+      <div id="overlay-warmup" class="hidden">
+        <span data-i18n="ui.warmUp">Warm-up</span>
+        <span id="overlay-warmup-time">2:00</span>
+        <button type="button" id="overlay-warmup-start" class="secondary" data-i18n="ui.start">Start</button>
+      </div>
+      <!-- Doubles, between games: any player of the winning side may serve first,
+           any player of the losing side may receive first -->
+      <div id="overlay-doubles" class="hidden">
+        <fieldset>
+          <legend data-i18n="ui.firstServer">First server</legend>
+          <label class="radio"><input type="radio" name="ngServer" value="0" checked><span id="ngs0"></span></label>
+          <label class="radio"><input type="radio" name="ngServer" value="1"><span id="ngs1"></span></label>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="ui.firstReceiver">First receiver</legend>
+          <label class="radio"><input type="radio" name="ngReceiver" value="0" checked><span id="ngr0"></span></label>
+          <label class="radio"><input type="radio" name="ngReceiver" value="1"><span id="ngr1"></span></label>
+        </fieldset>
+      </div>
+      <div id="overlay-timer"></div>
+      <div id="overlay-20s" class="hidden"></div>
+      <button id="overlay-action" class="primary"></button>
+    </div>
+  </div>
+</section>
+
+<script src="i18n.js"></script>
+<script src="match.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
