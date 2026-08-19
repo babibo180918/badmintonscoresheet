@@ -122,19 +122,37 @@
 
   <main id="court">
     <button class="tapzone" id="zone-left">
-      <div class="tz-name"></div>
-      <div class="tz-team hidden"></div>
-      <div class="tz-score">0</div>
-      <div class="tz-serve hidden"></div>
-      <div class="tz-games"></div>
+      <div class="quarter q-top"><span class="q-court"></span><span class="q-name"></span></div>
+      <div class="quarter q-bottom"><span class="q-court"></span><span class="q-name"></span></div>
+      <div class="tz-center">
+        <div class="tz-team hidden"></div>
+        <div class="tz-score">0</div>
+        <div class="tz-games"></div>
+      </div>
     </button>
     <button class="tapzone" id="zone-right">
-      <div class="tz-name"></div>
-      <div class="tz-team hidden"></div>
-      <div class="tz-score">0</div>
-      <div class="tz-serve hidden"></div>
-      <div class="tz-games"></div>
+      <div class="quarter q-top"><span class="q-court"></span><span class="q-name"></span></div>
+      <div class="quarter q-bottom"><span class="q-court"></span><span class="q-name"></span></div>
+      <div class="tz-center">
+        <div class="tz-team hidden"></div>
+        <div class="tz-score">0</div>
+        <div class="tz-games"></div>
+      </div>
     </button>
+    <!-- server → receiver arrow, drawn across the whole court -->
+    <svg id="serve-arrow" class="hidden" aria-hidden="true">
+      <defs>
+        <marker id="arrow-head" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5"
+                orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L7,3.5 L0,7 z" fill="#ffd54f"></path>
+        </marker>
+      </defs>
+      <line id="serve-line" marker-end="url(#arrow-head)"></line>
+    </svg>
+    <!-- manual corrections: change ends / swap a pair's positions -->
+    <button type="button" id="swap-ends" class="swap-btn" title="Change ends">&#8644;</button>
+    <button type="button" id="swap-left" class="swap-btn hidden" title="Swap players">&#8645;</button>
+    <button type="button" id="swap-right" class="swap-btn hidden" title="Swap players">&#8645;</button>
   </main>
 
   <!-- Interval / between-games overlay -->
@@ -142,6 +160,7 @@
     <div id="overlay-box">
       <div id="overlay-title"></div>
       <div id="overlay-text" class="hidden"></div>
+      <div id="overlay-change-ends" class="hidden"></div>
       <div id="overlay-warmup" class="hidden">
         <span data-i18n="ui.warmUp">Warm-up</span>
         <span id="overlay-warmup-time">2:00</span>

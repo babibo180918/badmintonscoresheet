@@ -136,32 +136,40 @@ function render() {
 
   $("btn-undo").disabled = state.history.length === 0;
 
+  renderArrow();
+  const showSwap = state.phase !== "finished";
+  $("swap-ends").classList.toggle("hidden", !showSwap);
+  $("swap-left").classList.toggle("hidden", !showSwap || !isDoubles());
+  $("swap-right").classList.toggle("hidden", !showSwap || !isDoubles());
+
   renderOverlay();
 }
 
 function renderZone(zone, player) {
-  const nameEl = zone.querySelector(".tz-name");
-  if (isDoubles()) {
-    // one row per player: court letter (R/L) + name; mark server and receiver
-    nameEl.textContent = "";
-    const live = state.phase === "playing" || state.phase === "interval";
-    const recvSide = 1 - state.server;
-    const receiver = Match.receiverPlayer(state);
-    for (const p of [0, 1]) {
-      const row = document.createElement("div");
-      row.className = "tz-player";
-      if (live && player === state.server && p === state.serverPlayer) row.classList.add("server");
-      if (live && player === recvSide && p === receiver) row.classList.add("receiver");
-      const chip = document.createElement("span");
-      chip.className = "tz-court";
-      chip.textContent = state.courts[player] === p ? ui("rightCourt") : ui("leftCourt");
-      const nm = document.createElement("span");
-      nm.textContent = state.config.names[player][p];
-      row.append(chip, nm);
-      nameEl.append(row);
+  const isLeftZone = zone.id === "zone-left";
+  const live = state.phase === "playing" || state.phase === "interval";
+  const srvCourt = Match.serviceCourt(state);
+  // teams face each other across the net: the left side's LEFT service court
+  // is the top quarter of the screen, the right side's RIGHT court is
+  const quarters = [
+    { el: zone.querySelector(".q-top"), court: isLeftZone ? "L" : "R" },
+    { el: zone.querySelector(".q-bottom"), court: isLeftZone ? "R" : "L" },
+  ];
+  for (const { el, court } of quarters) {
+    el.querySelector(".q-court").textContent =
+      court === "R" ? ui("rightCourt") : ui("leftCourt");
+    const nameEl = el.querySelector(".q-name");
+    if (isDoubles()) {
+      const p = court === "R" ? state.courts[player] : 1 - state.courts[player];
+      nameEl.textContent = state.config.names[player][p];
+    } else {
+      // singles: both players stand in the service court matching the
+      // server's score (server and receiver are diagonal)
+      const occupied = live ? srvCourt : "R";
+      nameEl.textContent = court === occupied ? state.config.names[player] : "";
     }
-  } else {
-    nameEl.textContent = state.config.names[player];
+    nameEl.classList.toggle("server", live && player === state.server && court === srvCourt);
+    nameEl.classList.toggle("receiver", live && player !== state.server && court === srvCourt);
   }
   const team = state.config.teams?.[player] || "";
   const teamEl = zone.querySelector(".tz-team");
@@ -169,16 +177,25 @@ function renderZone(zone, player) {
   teamEl.classList.toggle("hidden", !team);
   zone.querySelector(".tz-score").textContent = state.score[player];
   zone.querySelector(".tz-games").textContent = "●".repeat(state.gamesWon[player]);
-
-  const serveEl = zone.querySelector(".tz-serve");
-  const isServer = state.server === player && state.phase !== "finished";
-  serveEl.classList.toggle("hidden", !isServer);
-  if (isServer) {
-    const court = Match.serviceCourt(state) === "R" ? ui("rightCourt") : ui("leftCourt");
-    serveEl.textContent = `${ui("serving")} · ${court}`;
-  }
   zone.disabled = state.phase !== "playing";
   zone.classList.toggle("winner", state.phase === "finished" && state.winner === player);
+}
+
+/* Arrow from the server's service court to the receiver's (the diagonal). */
+function renderArrow() {
+  const svg = $("serve-arrow");
+  const live = state.phase === "playing" || state.phase === "interval";
+  svg.classList.toggle("hidden", !live);
+  if (!live) return;
+  const c = Match.serviceCourt(state);
+  const srvLeft = state.server === state.leftPlayer;
+  // quarter centre y: top quarter = 25%, bottom = 75% (renderZone's mapping)
+  const y = (onLeft) => ((onLeft ? c === "L" : c === "R") ? "25%" : "75%");
+  const line = $("serve-line");
+  line.setAttribute("x1", srvLeft ? "30%" : "70%");
+  line.setAttribute("y1", y(srvLeft));
+  line.setAttribute("x2", srvLeft ? "70%" : "30%");
+  line.setAttribute("y2", y(!srvLeft));
 }
 
 function renderOverlay() {
@@ -207,7 +224,9 @@ function renderOverlay() {
   const title = $("overlay-title");
   const action = $("overlay-action");
   const text = $("overlay-text");
+  title.classList.remove("hidden");
   $("overlay-doubles").classList.add("hidden");
+  $("overlay-change-ends").classList.add("hidden");
 
   if (state.preMatch) {
     title.textContent = ui("announcementTitle");
@@ -220,11 +239,17 @@ function renderOverlay() {
   $("overlay-warmup").classList.add("hidden");
 
   if (state.phase === "interval") {
-    title.textContent = ui("intervalTitle");
+    title.classList.add("hidden"); // no title needed here
     action.textContent = ui("resumePlay");
     // same call as the yellow bar, e.g. "11-6; interval"
     text.textContent = state.announcement;
     text.classList.remove("hidden");
+    // deciding game: players change ends at this interval — say it loudly
+    if (state.gameIndex === 2) {
+      const ce = $("overlay-change-ends");
+      ce.textContent = ui("changeEnds");
+      ce.classList.remove("hidden");
+    }
   } else if (state.phase === "between_games") {
     title.textContent = ui("betweenGamesTitle");
     action.textContent = ui("startNextGame");
@@ -406,6 +431,27 @@ function onOverlayClose() {
   render();
 }
 
+/* ---------- manual corrections on the court drawing ---------- */
+function onSwapEnds() {
+  state.leftPlayer = 1 - state.leftPlayer;
+  save();
+  render();
+}
+
+/* Doubles: swap the two players of one side between their service courts.
+ * If that side is serving, the serve follows the parity-correct court. */
+function onSwapPlayers(screenSide) {
+  if (!isDoubles()) return;
+  const side = screenSide === "left" ? state.leftPlayer : 1 - state.leftPlayer;
+  state.courts[side] = 1 - state.courts[side];
+  if (state.server === side) {
+    state.serverPlayer =
+      state.score[side] % 2 === 0 ? state.courts[side] : 1 - state.courts[side];
+  }
+  save();
+  render();
+}
+
 function onNewMatch() {
   if (state && state.phase !== "finished" && !confirm(ui("confirmNew"))) return;
   clearSaved();
@@ -513,6 +559,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btn-new").addEventListener("click", onNewMatch);
   $("overlay-action").addEventListener("click", onOverlayAction);
   $("overlay-close").addEventListener("click", onOverlayClose);
+  $("swap-ends").addEventListener("click", onSwapEnds);
+  $("swap-left").addEventListener("click", () => onSwapPlayers("left"));
+  $("swap-right").addEventListener("click", () => onSwapPlayers("right"));
   // tapping the yellow bar reopens a popup that was closed early
   $("announcement").addEventListener("click", () => {
     if (state?.overlayClosed) { state.overlayClosed = false; save(); render(); }

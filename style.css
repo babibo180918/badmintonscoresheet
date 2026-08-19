@@ -108,44 +108,68 @@ button.secondary { background: #e2e2da; color: var(--text); margin-top: 0.5rem; 
 
 #court {
   flex: 1; display: flex; gap: 6px; padding: 6px;
-  background: var(--line);
+  background: var(--line); position: relative;
 }
 .tapzone {
-  flex: 1; border: none; cursor: pointer;
+  flex: 1; border: none; cursor: pointer; padding: 0;
   background: var(--court); color: #fff;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 0.4rem; border-radius: 4px;
+  display: flex; flex-direction: column;
+  border-radius: 4px; position: relative;
   -webkit-tap-highlight-color: transparent;
 }
 .tapzone:active:not(:disabled) { background: #398b5f; }
 .tapzone:disabled { cursor: default; opacity: 0.85; }
 .tapzone.winner { background: #b8860b; }
 
-.tz-name {
-  font-size: clamp(1.1rem, 3vw, 1.8rem); font-weight: 700;
-  display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+/* two service courts stacked per side; the white divider is the court line */
+.quarter { flex: 1; position: relative; }
+.quarter.q-top { border-bottom: 3px solid var(--line); }
+.q-court {
+  position: absolute; top: 0.35rem; left: 0.5rem;
+  font-size: 0.85rem; font-weight: 800; opacity: 0.5;
 }
-/* doubles: one row per player — court letter chip + name */
-.tz-player { display: flex; align-items: center; gap: 0.5rem; font-size: clamp(1rem, 2.6vw, 1.5rem); }
-.tz-court {
-  font-size: 0.7em; font-weight: 800; opacity: 0.7;
-  border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 0.3rem;
-  padding: 0 0.3em; min-width: 1.4em; text-align: center;
+.q-name {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  z-index: 2; max-width: 92%; text-align: center;
+  font-size: clamp(1rem, 2.8vw, 1.6rem); font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.tz-player.server { color: var(--accent); }
-.tz-player.server .tz-court { border-color: var(--accent); opacity: 1; }
-.tz-player.receiver .tz-court { border-style: dashed; opacity: 1; }
-.tz-team { font-size: clamp(0.85rem, 2vw, 1.15rem); font-weight: 600; opacity: 0.75; margin-top: -0.3rem; }
+.q-name.server { color: var(--accent); }
+.q-name.receiver { text-decoration: underline dashed; text-underline-offset: 5px; }
+
+/* team / score / games overlaid at the side's centre */
+.tz-center {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.2rem;
+}
+.tz-team { font-size: clamp(0.85rem, 2vw, 1.15rem); font-weight: 600; opacity: 0.75; }
 .tz-score {
-  font-size: clamp(5rem, 22vw, 13rem); font-weight: 800; line-height: 1;
+  font-size: clamp(4rem, 18vw, 10rem); font-weight: 800; line-height: 1;
   font-variant-numeric: tabular-nums;
-}
-.tz-serve {
-  background: var(--accent); color: #3d2e00;
-  font-size: 0.95rem; font-weight: 800; letter-spacing: 0.06em;
-  padding: 0.3rem 0.7rem; border-radius: 999px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 .tz-games { color: var(--accent); font-size: 1.3rem; min-height: 1.5rem; letter-spacing: 0.3em; }
+
+/* server → receiver arrow */
+#serve-arrow {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: 1; pointer-events: none;
+}
+#serve-line { stroke: var(--accent); stroke-width: 4; opacity: 0.95; }
+
+/* small round correction buttons on the court lines */
+.swap-btn {
+  position: absolute; z-index: 3;
+  width: 2.5rem; height: 2.5rem; border-radius: 50%;
+  border: none; background: #fff; color: var(--green);
+  font-size: 1.25rem; font-weight: 800; line-height: 1; cursor: pointer;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+}
+.swap-btn:active { background: var(--accent); }
+#swap-ends { left: 50%; top: 50%; transform: translate(-50%, -50%); }
+#swap-left { left: 0.4rem; top: 50%; transform: translateY(-50%); }
+#swap-right { right: 0.4rem; top: 50%; transform: translateY(-50%); }
 
 /* ===== Overlay (interval / between games / match over) ===== */
 #overlay {
@@ -163,6 +187,12 @@ button.secondary { background: #e2e2da; color: var(--text); margin-top: 0.5rem; 
 #overlay-text {
   font-size: 1.4rem; font-weight: 700; color: var(--green);
   line-height: 1.55; max-width: 28rem; white-space: pre-line;
+}
+/* deciding-game interval: prominent "Change ends" reminder */
+#overlay-change-ends {
+  background: var(--accent); color: #3d2e00;
+  font-weight: 800; font-size: 1.2rem;
+  padding: 0.4rem 1.1rem; border-radius: 999px;
 }
 #overlay-warmup { display: flex; align-items: center; gap: 0.8rem; font-weight: 600; }
 #overlay-warmup-time { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
