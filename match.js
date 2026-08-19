@@ -29,9 +29,11 @@
  */
 "use strict";
 
+/* Default (BWF) rules; a match can carry overrides in config.rules. */
 const RULES = {
   gamePoints: 21,
   maxPoints: 30,      // 29-all → first to 30
+  bestOf: 3,
   gamesToWin: 2,
   intervalAt: 11,     // leading score triggering the mid-game interval
   intervalMs: 60 * 1000,
@@ -64,6 +66,11 @@ const Match = {
     return state;
   },
 
+  /* Effective rules for a match: defaults + per-match overrides. */
+  rules(state) {
+    return { ...RULES, ...(state.config.rules || {}) };
+  },
+
   /* Display name of a side: the player, or "A / B" for a doubles pair. */
   sideName(config, side) {
     const n = config.names[side];
@@ -86,6 +93,7 @@ const Match = {
     if (state.phase !== "playing") return state;
     this._snapshot(state);
 
+    const R = this.rules(state);
     const L = state.config.lang;
     const call = [];
 
@@ -107,14 +115,14 @@ const Match = {
 
     // --- game finished? ---
     const won =
-      (state.score[w] >= RULES.gamePoints && state.score[w] - state.score[other] >= 2) ||
-      state.score[w] === RULES.maxPoints;
+      (state.score[w] >= R.gamePoints && state.score[w] - state.score[other] >= 2) ||
+      state.score[w] === R.maxPoints;
 
     if (won) {
       state.gamesWon[w] += 1;
       state.games.push([a, b]);
       const name = this.sideName(state.config, w);
-      if (state.gamesWon[w] === RULES.gamesToWin) {
+      if (state.gamesWon[w] === R.gamesToWin) {
         state.phase = "finished";
         state.winner = w;
         const scores = state.games
@@ -123,7 +131,7 @@ const Match = {
         state.announcement = t(L, "call.matchWonBy", { name, scores });
       } else {
         state.phase = "between_games";
-        state.timerEndsAt = Date.now() + RULES.betweenGamesMs;
+        state.timerEndsAt = Date.now() + R.betweenGamesMs;
         const score = w === 0 ? `${a}-${b}` : `${b}-${a}`;
         state.announcement =
           t(L, state.gameIndex === 0 ? "call.firstGameWonBy" : "call.secondGameWonBy", { name }) +
@@ -150,10 +158,10 @@ const Match = {
       const s = state.score[p];
       const o = state.score[1 - p];
       const holds =
-        (s === RULES.gamePoints - 1 && o < RULES.gamePoints - 1 && p === w) ||
-        s === RULES.maxPoints - 1;
+        (s === R.gamePoints - 1 && o < R.gamePoints - 1 && p === w) ||
+        s === R.maxPoints - 1;
       if (!holds) return null;
-      const isMatch = state.gamesWon[p] === RULES.gamesToWin - 1;
+      const isMatch = state.gamesWon[p] === R.gamesToWin - 1;
       return t(L, isMatch ? "call.matchPoint" : "call.gamePoint");
     };
 
@@ -180,14 +188,14 @@ const Match = {
 
     // --- mid-game interval at 11 (leading score) ---
     const leader = a === b ? null : (a > b ? 0 : 1);
-    if (!state.intervalTaken && leader !== null && state.score[leader] === RULES.intervalAt) {
+    if (!state.intervalTaken && leader !== null && state.score[leader] === R.intervalAt) {
       state.intervalTaken = true;
       state.phase = "interval";
-      state.timerEndsAt = Date.now() + RULES.intervalMs;
+      state.timerEndsAt = Date.now() + R.intervalMs;
       call.push(t(L, "call.interval"));
       // deciding game: announce change of ends; the actual swap happens
       // when play resumes (see resume())
-      if (state.gameIndex === 2) call.push(t(L, "call.changeEnds"));
+      if (state.gameIndex === R.bestOf - 1) call.push(t(L, "call.changeEnds"));
     }
 
     state.announcement = call.join("; ");
@@ -199,7 +207,9 @@ const Match = {
     if (state.phase !== "interval") return state;
     this._snapshot(state);
     // deciding game: the sides change ends coming out of this interval
-    if (state.gameIndex === 2) state.leftPlayer = 1 - state.leftPlayer;
+    if (state.gameIndex === this.rules(state).bestOf - 1) {
+      state.leftPlayer = 1 - state.leftPlayer;
+    }
     const L = state.config.lang;
     const sw = t(L, "call.scoreWord");
     const sServer = state.score[state.server];
@@ -235,7 +245,8 @@ const Match = {
     state.leftPlayer = 1 - state.leftPlayer; // change ends between games
     state.phase = "playing";
     state.timerEndsAt = null;
-    state.announcement = t(L, state.gameIndex === 1 ? "call.secondGame" : "call.finalGame");
+    state.announcement = t(L,
+      state.gameIndex === this.rules(state).bestOf - 1 ? "call.finalGame" : "call.secondGame");
     return state;
   },
 

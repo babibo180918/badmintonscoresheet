@@ -13,7 +13,10 @@
 
 <!-- ===== Setup screen ===== -->
 <section id="setup" class="screen">
-  <h1 data-i18n="ui.title">Badminton Score Sheet</h1>
+  <div id="setup-top">
+    <h1 data-i18n="ui.title">Badminton Score Sheet</h1>
+    <button type="button" id="open-settings" title="Settings">&#9881;</button>
+  </div>
   <form id="setup-form">
     <label>
       <span data-i18n="ui.courtNumber">Court number</span>
@@ -95,10 +98,51 @@
   <button id="resume-match" class="secondary hidden" data-i18n="ui.resumeMatch">Resume previous match</button>
 </section>
 
+<!-- ===== Settings screen ===== -->
+<section id="settings" class="screen hidden">
+  <header id="settings-header">
+    <h1 data-i18n="ui.settingsTitle">Settings</h1>
+    <button type="button" id="settings-close" data-i18n="ui.close">Close</button>
+  </header>
+
+  <div class="settings-group-title" data-i18n="ui.settingsMatch">Match</div>
+  <div class="settings-group">
+    <label class="settings-row"><span data-i18n="ui.gameTo">Game to</span>
+      <span class="settings-value"><input type="number" id="set-gameto" inputmode="numeric"></span></label>
+    <label class="settings-row"><span data-i18n="ui.maxScore">Maximum score</span>
+      <span class="settings-value"><input type="number" id="set-max" inputmode="numeric"></span></label>
+    <label class="settings-row"><span data-i18n="ui.bestOf">Best of</span>
+      <span class="settings-value"><select id="set-bestof">
+        <option value="1">1</option><option value="3">3</option><option value="5">5</option>
+      </select></span></label>
+    <label class="settings-row"><span data-i18n="ui.intervalAt">Interval / switch sides at</span>
+      <span class="settings-value"><input type="number" id="set-intervalat" inputmode="numeric"></span></label>
+  </div>
+
+  <div class="settings-group-title" data-i18n="ui.settingsDuration">Duration</div>
+  <div class="settings-group">
+    <label class="settings-row"><span data-i18n="ui.warmupTime">Warm-up time</span>
+      <span class="settings-value"><input type="number" id="set-warmup" inputmode="numeric"><span class="unit">s.</span></span></label>
+    <label class="settings-row"><span data-i18n="ui.intervalDur">Interval</span>
+      <span class="settings-value"><input type="number" id="set-intervaldur" inputmode="numeric"><span class="unit">s.</span></span></label>
+    <label class="settings-row"><span data-i18n="ui.betweenGamesDur">Between games</span>
+      <span class="settings-value"><input type="number" id="set-between" inputmode="numeric"><span class="unit">s.</span></span></label>
+  </div>
+
+  <div class="settings-group-title" data-i18n="ui.settingsGeneral">General</div>
+  <div class="settings-group">
+    <label class="settings-row"><span data-i18n="ui.showShuttle">Show shuttle count</span>
+      <span class="switch"><input type="checkbox" id="set-shuttle"><span class="knob"></span></span></label>
+  </div>
+
+  <button type="button" id="settings-reset" data-i18n="ui.resetSettings">Reset settings</button>
+</section>
+
 <!-- ===== Match screen ===== -->
 <section id="match" class="screen hidden">
   <header id="topbar">
     <button id="btn-undo" title="Undo">&#8630; <span data-i18n="ui.undo">Undo</span></button>
+    <button id="btn-shuttle" class="hidden" title="Shuttles used">&#127992; <span id="shuttle-count">1</span></button>
     <div id="games-summary"></div>
     <div id="match-clock"></div>
     <button id="btn-new" title="New match" data-i18n="ui.newMatch">New match</button>

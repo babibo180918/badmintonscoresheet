@@ -3,8 +3,32 @@
 
 const STORAGE_KEY = "badmintonscoresheet.state";
 const WARMUP_KEY = "badmintonscoresheet.warmup"; // ms-epoch the warm-up ends at
-const WARMUP_MS = 2 * 60 * 1000;
 const WARMUP_WARN_MS = 30 * 1000; // last 30 s blink red
+
+/* ---------- settings (persisted independently of the match) ---------- */
+const SETTINGS_KEY = "badmintonscoresheet.settings";
+const DEFAULT_SETTINGS = {
+  gamePoints: 21,
+  maxPoints: 30,
+  bestOf: 3,
+  intervalAt: 11,
+  warmupSec: 120,
+  intervalSec: 60,
+  betweenGamesSec: 120,
+  showShuttle: true,
+};
+let settings = loadSettings();
+function loadSettings() {
+  try {
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+function saveSettings() {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+const warmupMs = () => settings.warmupSec * 1000;
 
 let state = null;
 let timerHandle = null;
@@ -79,7 +103,7 @@ function startWarmupTicker() {
     let end = warmupEndsAt();
     // expired on the setup page → reset, ready to start again
     if (end && end - Date.now() <= 0) { localStorage.removeItem(WARMUP_KEY); end = null; }
-    el.textContent = end ? fmtCountdown(end - Date.now()) : fmtCountdown(WARMUP_MS);
+    el.textContent = end ? fmtCountdown(end - Date.now()) : fmtCountdown(warmupMs());
     el.classList.toggle("warning", !!end && end - Date.now() <= WARMUP_WARN_MS);
   };
   tick();
@@ -107,7 +131,7 @@ function tickOverlayWarmup() {
   } else {
     block.classList.remove("hidden");
     btn.classList.remove("hidden");
-    timeEl.textContent = fmtCountdown(WARMUP_MS);
+    timeEl.textContent = fmtCountdown(warmupMs());
     timeEl.classList.remove("warning");
   }
 }
@@ -147,6 +171,9 @@ function render() {
   $("games-summary").textContent = parts.join("  |  ");
 
   $("btn-undo").disabled = state.history.length === 0;
+
+  $("btn-shuttle").classList.toggle("hidden", !settings.showShuttle);
+  $("shuttle-count").textContent = state.shuttles || 1;
 
   renderArrow();
   const showSwap = state.phase !== "finished";
@@ -535,6 +562,16 @@ function initSetup() {
       // the form asks who starts on the umpire's RIGHT; match state tracks the left player
       leftPlayer: 1 - Number(document.querySelector('input[name="rightPlayer"]:checked').value),
       lang,
+      // freeze the current settings into this match's rules
+      rules: {
+        gamePoints: settings.gamePoints,
+        maxPoints: settings.maxPoints,
+        bestOf: settings.bestOf,
+        gamesToWin: Math.ceil(settings.bestOf / 2),
+        intervalAt: settings.intervalAt,
+        intervalMs: settings.intervalSec * 1000,
+        betweenGamesMs: settings.betweenGamesSec * 1000,
+      },
     };
     if (doubles) {
       const [srvSide, srvPlayer] =
@@ -548,6 +585,7 @@ function initSetup() {
     }
     state = Match.create(config);
     // app-level pre-match fields: announcement popup + match clock
+    state.shuttles = 1;
     state.preMatch = true;
     state.matchStartedAt = null;
     state.matchEndedAt = null;
@@ -564,10 +602,10 @@ function initSetup() {
   $("same1").addEventListener("change", syncSameClub);
 
   $("warmup-start").addEventListener("click", () => {
-    localStorage.setItem(WARMUP_KEY, String(Date.now() + WARMUP_MS));
+    localStorage.setItem(WARMUP_KEY, String(Date.now() + warmupMs()));
   });
   $("overlay-warmup-start").addEventListener("click", () => {
-    localStorage.setItem(WARMUP_KEY, String(Date.now() + WARMUP_MS));
+    localStorage.setItem(WARMUP_KEY, String(Date.now() + warmupMs()));
   });
 
   $("resume-match").addEventListener("click", () => {
@@ -578,14 +616,83 @@ function initSetup() {
   });
 }
 
+/* ---------- settings screen ---------- */
+function refreshSettingsInputs() {
+  $("set-gameto").value = settings.gamePoints;
+  $("set-max").value = settings.maxPoints;
+  $("set-bestof").value = String(settings.bestOf);
+  $("set-intervalat").value = settings.intervalAt;
+  $("set-warmup").value = settings.warmupSec;
+  $("set-intervaldur").value = settings.intervalSec;
+  $("set-between").value = settings.betweenGamesSec;
+  $("set-shuttle").checked = settings.showShuttle;
+}
+
+function initSettings() {
+  const bindNumber = (id, key, min, max) => {
+    $(id).addEventListener("change", () => {
+      let v = Math.round(Number($(id).value));
+      if (!Number.isFinite(v)) v = DEFAULT_SETTINGS[key];
+      settings[key] = Math.min(max, Math.max(min, v));
+      // the cap can never be below the game-winning score
+      if (settings.maxPoints < settings.gamePoints) {
+        settings.maxPoints = settings.gamePoints;
+      }
+      saveSettings();
+      refreshSettingsInputs();
+    });
+  };
+  bindNumber("set-gameto", "gamePoints", 2, 99);
+  bindNumber("set-max", "maxPoints", 2, 99);
+  bindNumber("set-intervalat", "intervalAt", 1, 98);
+  bindNumber("set-warmup", "warmupSec", 0, 900);
+  bindNumber("set-intervaldur", "intervalSec", 0, 900);
+  bindNumber("set-between", "betweenGamesSec", 0, 900);
+  $("set-bestof").addEventListener("change", () => {
+    settings.bestOf = Number($("set-bestof").value);
+    saveSettings();
+  });
+  $("set-shuttle").addEventListener("change", () => {
+    settings.showShuttle = $("set-shuttle").checked;
+    saveSettings();
+  });
+  $("open-settings").addEventListener("click", () => {
+    refreshSettingsInputs();
+    $("setup").classList.add("hidden");
+    $("settings").classList.remove("hidden");
+  });
+  $("settings-close").addEventListener("click", () => {
+    $("settings").classList.add("hidden");
+    $("setup").classList.remove("hidden");
+  });
+  $("settings-reset").addEventListener("click", () => {
+    settings = { ...DEFAULT_SETTINGS };
+    saveSettings();
+    refreshSettingsInputs();
+  });
+}
+
 /* ---------- boot ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   initSetup();
+  initSettings();
   applyStaticI18n($("lang").value);
   $("zone-left").addEventListener("click", () => onPoint("left"));
   $("zone-right").addEventListener("click", () => onPoint("right"));
   $("btn-undo").addEventListener("click", onUndo);
   $("btn-new").addEventListener("click", onNewMatch);
+  // shuttle counter: tap = next shuttle; long-press/right-click = undo one
+  $("btn-shuttle").addEventListener("click", () => {
+    state.shuttles = (state.shuttles || 1) + 1;
+    save();
+    render();
+  });
+  $("btn-shuttle").addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    state.shuttles = Math.max(1, (state.shuttles || 1) - 1);
+    save();
+    render();
+  });
   $("overlay-action").addEventListener("click", onOverlayAction);
   $("overlay-close").addEventListener("click", onOverlayClose);
   $("swap-ends").addEventListener("click", onSwapEnds);
