@@ -30,8 +30,9 @@ body {
 #setup-form { display: flex; flex-direction: column; gap: 1.1rem; }
 #setup-form label { display: flex; flex-direction: column; gap: 0.3rem; font-weight: 600; }
 /* the two sides as columns with "vs" between them */
-#sides { display: flex; align-items: center; gap: 0.6rem; }
-.side-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+/* the two teams stacked: side 1 above, "vs", side 2 below */
+#sides { display: flex; flex-direction: column; gap: 0.6rem; }
+.side-col { min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
 .side-col input[type="text"] { width: 100%; min-width: 0; }
 /* doubles: partner's club input + "Same club" checkbox in one row */
 .club-row { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
@@ -43,7 +44,7 @@ body {
 }
 .same-club input { width: 1.1rem; height: 1.1rem; }
 #setup-form input[type="text"]:disabled { opacity: 0.45; background: #eee; }
-#vs { font-weight: 800; font-size: 1.2rem; color: var(--green); flex: none; }
+#vs { font-weight: 800; font-size: 1.2rem; color: var(--green); flex: none; align-self: center; }
 #setup-form input[type="text"], #setup-form select {
   font-size: 1.1rem; padding: 0.6rem 0.7rem;
   border: 2px solid #c9c9c2; border-radius: 0.5rem; background: #fff;
