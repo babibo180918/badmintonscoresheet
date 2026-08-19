@@ -99,6 +99,12 @@ button.secondary { background: #e2e2da; color: var(--text); margin-top: 0.5rem; 
 /* interval/break countdown shown in the bar once the popup is closed */
 #announcement-timer { font-weight: 800; font-variant-numeric: tabular-nums; }
 #announcement-timer.warning { color: #c62828; animation: blink 1s steps(1) infinite; }
+/* "Resume play" / "Start next game" beside the bar countdown */
+#announcement-action {
+  background: var(--green); color: #fff; border: none; border-radius: 0.5rem;
+  font-size: 1.05rem; font-weight: 700; padding: 0.55rem 1rem; cursor: pointer;
+}
+#announcement-action:active { background: var(--green-dark); }
 
 #court {
   flex: 1; display: flex; gap: 6px; padding: 6px;

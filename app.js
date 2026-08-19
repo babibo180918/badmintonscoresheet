@@ -192,6 +192,13 @@ function renderOverlay() {
   overlay.classList.toggle("pre-match", !!state.preMatch);
   $("overlay-close").classList.toggle("hidden", !timed);
   if (!timed) $("announcement-timer").classList.add("hidden");
+  // popup closed → its action button moves into the yellow bar
+  const dismissed = timed && state.overlayClosed;
+  const barBtn = $("announcement-action");
+  barBtn.classList.toggle("hidden", !dismissed);
+  if (dismissed) {
+    barBtn.textContent = ui(state.phase === "interval" ? "resumePlay" : "startNextGame");
+  }
   if (!inOverlay) {
     if (timed) startTimer(); else stopTimer();
     return;
@@ -509,6 +516,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // tapping the yellow bar reopens a popup that was closed early
   $("announcement").addEventListener("click", () => {
     if (state?.overlayClosed) { state.overlayClosed = false; save(); render(); }
+  });
+  // same action as the popup's button (don't let the tap reopen the popup)
+  $("announcement-action").addEventListener("click", (e) => {
+    e.stopPropagation();
+    advancePhase();
   });
 
   const saved = load();
