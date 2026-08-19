@@ -114,7 +114,10 @@
     <button id="btn-new" title="New match" data-i18n="ui.newMatch">New match</button>
   </header>
 
-  <div id="announcement" aria-live="polite"></div>
+  <div id="announcement" aria-live="polite">
+    <span id="announcement-text"></span>
+    <span id="announcement-timer" class="hidden"></span>
+  </div>
 
   <main id="court">
     <button class="tapzone" id="zone-left">
@@ -159,7 +162,10 @@
       </div>
       <div id="overlay-timer"></div>
       <div id="overlay-20s" class="hidden"></div>
-      <button id="overlay-action" class="primary"></button>
+      <div id="overlay-buttons">
+        <button id="overlay-action" class="primary"></button>
+        <button id="overlay-close" class="secondary hidden" data-i18n="ui.close">Close</button>
+      </div>
     </div>
   </div>
 </section>

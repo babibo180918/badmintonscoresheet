@@ -127,7 +127,7 @@ function render() {
   renderZone($("zone-left"), left);
   renderZone($("zone-right"), right);
 
-  $("announcement").textContent = state.announcement;
+  $("announcement-text").textContent = state.announcement;
 
   // games summary in the top bar, e.g. "21-15 | 11-8"
   const parts = state.games.map(([a, b]) => `${a}-${b}`);
@@ -183,11 +183,19 @@ function renderZone(zone, player) {
 
 function renderOverlay() {
   const overlay = $("overlay");
-  const inOverlay = state.preMatch ||
-    state.phase === "interval" || state.phase === "between_games" || state.phase === "finished";
+  // interval/break popups can be closed early; their timer then runs in the
+  // yellow announcement bar instead
+  const timed = state.phase === "interval" || state.phase === "between_games";
+  const inOverlay = (state.preMatch || timed || state.phase === "finished") &&
+    !(timed && state.overlayClosed);
   overlay.classList.toggle("hidden", !inOverlay);
   overlay.classList.toggle("pre-match", !!state.preMatch);
-  if (!inOverlay) { stopTimer(); return; }
+  $("overlay-close").classList.toggle("hidden", !timed);
+  if (!timed) $("announcement-timer").classList.add("hidden");
+  if (!inOverlay) {
+    if (timed) startTimer(); else stopTimer();
+    return;
+  }
 
   const title = $("overlay-title");
   const action = $("overlay-action");
@@ -202,12 +210,14 @@ function renderOverlay() {
     startTimer(); // drives the popup's warm-up block too
     return;
   }
-  text.classList.add("hidden");
   $("overlay-warmup").classList.add("hidden");
 
   if (state.phase === "interval") {
     title.textContent = ui("intervalTitle");
     action.textContent = ui("resumePlay");
+    // same call as the yellow bar, e.g. "11-6; interval"
+    text.textContent = state.announcement;
+    text.classList.remove("hidden");
   } else if (state.phase === "between_games") {
     title.textContent = ui("betweenGamesTitle");
     action.textContent = ui("startNextGame");
@@ -266,34 +276,46 @@ function twentySecondsCall() {
     : t(uiLang(), "call.twentySecondsShort");
 }
 
-/* countdown for pre-match warm-up / interval / between-games; purely informative */
+/* countdown for pre-match warm-up / interval / between-games.
+ * Runs while the popup is open AND after it is closed early (the countdown
+ * then shows in the yellow bar). At 0:00 the phase auto-advances exactly as
+ * if "Resume play" / "Start next game" had been tapped. */
 function startTimer() {
   stopTimer();
   const el = $("overlay-timer");
   const msg = $("overlay-20s");
+  const barEl = $("announcement-timer");
   const tick = () => {
     if (state.preMatch) {
       el.textContent = "";
-      el.classList.remove("expired", "warning");
+      el.classList.remove("warning");
       msg.classList.add("hidden");
+      barEl.classList.add("hidden");
       tickOverlayWarmup();
       return;
     }
     if (!state.timerEndsAt) {
       el.textContent = "";
-      el.classList.remove("expired", "warning");
+      el.classList.remove("warning");
       msg.classList.add("hidden");
+      barEl.classList.add("hidden");
       return;
     }
     const remaining = Math.max(0, state.timerEndsAt - Date.now());
+    if (remaining === 0) { onTimerExpired(); return; }
     el.textContent = fmtCountdown(remaining);
-    el.classList.toggle("expired", remaining === 0);
     // last 20 s of an interval: umpire's "twenty seconds" call, blinking red
-    const show20 = remaining > 0 && remaining <= 20 * 1000 &&
+    const show20 = remaining <= 20 * 1000 &&
       (state.phase === "interval" || state.phase === "between_games");
     el.classList.toggle("warning", show20);
     msg.classList.toggle("hidden", !show20);
     if (show20) msg.textContent = twentySecondsCall();
+    // popup closed early → countdown lives in the yellow bar instead
+    barEl.classList.toggle("hidden", !state.overlayClosed);
+    if (state.overlayClosed) {
+      barEl.textContent = fmtCountdown(remaining);
+      barEl.classList.toggle("warning", show20);
+    }
   };
   tick();
   timerHandle = setInterval(tick, 250);
@@ -335,6 +357,27 @@ function onUndo() {
   render();
 }
 
+/* Leave interval/between-games and play on — used by the popup's action
+ * button and by the countdown reaching 0:00. */
+function advancePhase() {
+  if (state.phase === "interval") state = Match.resume(state);
+  else if (state.phase === "between_games") {
+    const choices = isDoubles() ? {
+      serverPlayer: Number(document.querySelector('input[name="ngServer"]:checked').value),
+      receiverPlayer: Number(document.querySelector('input[name="ngReceiver"]:checked').value),
+    } : undefined;
+    state = Match.nextGame(state, choices);
+  }
+  state.overlayClosed = false;
+  save();
+  render();
+}
+
+function onTimerExpired() {
+  stopTimer();
+  advancePhase();
+}
+
 function onOverlayAction() {
   if (state.preMatch) {
     // "Play": close the announcement, end the warm-up, start the match clock
@@ -345,15 +388,13 @@ function onOverlayAction() {
     render();
     return;
   }
-  if (state.phase === "interval") state = Match.resume(state);
-  else if (state.phase === "between_games") {
-    const choices = isDoubles() ? {
-      serverPlayer: Number(document.querySelector('input[name="ngServer"]:checked').value),
-      receiverPlayer: Number(document.querySelector('input[name="ngReceiver"]:checked').value),
-    } : undefined;
-    state = Match.nextGame(state, choices);
-  }
-  else if (state.phase === "finished") { clearSaved(); showSetup(); return; }
+  if (state.phase === "finished") { clearSaved(); showSetup(); return; }
+  advancePhase();
+}
+
+/* Close the interval/break popup early; the countdown moves to the yellow bar. */
+function onOverlayClose() {
+  state.overlayClosed = true;
   save();
   render();
 }
@@ -464,6 +505,11 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btn-undo").addEventListener("click", onUndo);
   $("btn-new").addEventListener("click", onNewMatch);
   $("overlay-action").addEventListener("click", onOverlayAction);
+  $("overlay-close").addEventListener("click", onOverlayClose);
+  // tapping the yellow bar reopens a popup that was closed early
+  $("announcement").addEventListener("click", () => {
+    if (state?.overlayClosed) { state.overlayClosed = false; save(); render(); }
+  });
 
   const saved = load();
   if (saved && saved.phase !== "finished") {

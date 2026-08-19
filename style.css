@@ -91,9 +91,14 @@ button.secondary { background: #e2e2da; color: var(--text); margin-top: 0.5rem; 
 
 #announcement {
   background: var(--accent); color: #3d2e00;
-  text-align: center; font-size: clamp(1.1rem, 2.5vw, 1.6rem); font-weight: 700;
-  padding: 0.7rem 1rem; min-height: 2.9rem;
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+  gap: 0.2rem 1.2rem;
+  text-align: center; font-size: clamp(1.4rem, 3.2vw, 2.2rem); font-weight: 700;
+  padding: 1rem 1.2rem; min-height: 4.2rem;
 }
+/* interval/break countdown shown in the bar once the popup is closed */
+#announcement-timer { font-weight: 800; font-variant-numeric: tabular-nums; }
+#announcement-timer.warning { color: #c62828; animation: blink 1s steps(1) infinite; }
 
 #court {
   flex: 1; display: flex; gap: 6px; padding: 6px;
@@ -157,7 +162,6 @@ button.secondary { background: #e2e2da; color: var(--text); margin-top: 0.5rem; 
 #overlay-warmup-time { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 #overlay-warmup button { margin-top: 0; padding: 0.5rem 1rem; font-size: 1rem; }
 #overlay-timer { font-size: 3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-#overlay-timer.expired { color: #c62828; }
 /* last 20 s of an interval: countdown + "twenty seconds" call blink red */
 #overlay-timer.warning {
   color: #c62828;
@@ -168,6 +172,9 @@ button.secondary { background: #e2e2da; color: var(--text); margin-top: 0.5rem; 
   max-width: 24rem; line-height: 1.4;
   animation: blink 1s steps(1) infinite;
 }
+
+#overlay-buttons { display: flex; gap: 0.8rem; }
+#overlay-buttons .secondary { margin-top: 0; }
 
 /* doubles, between games: next-game server/receiver pickers */
 #overlay-doubles { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; text-align: left; }
