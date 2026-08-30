@@ -250,6 +250,44 @@ const Match = {
     return state;
   },
 
+  /* Rally-by-rally reconstruction for the score sheet, rebuilt from the undo
+   * history so it follows the corrected path. One entry per game:
+   *   { index, server, serverPlayer, receiverPlayer, score, rallies: [...] }
+   * Each rally records who won it and which player serves next — on the paper
+   * sheet the new score is written in that player's row. */
+  timeline(state) {
+    const steps = [...(state.history || []), state].map(({ history, ...rest }) => rest);
+    const doubles = state.config.mode === "doubles";
+    const games = [];
+    let cur = null;
+    for (let i = 0; i < steps.length; i++) {
+      const s = steps[i];
+      if (!cur || s.gameIndex !== cur.index) {
+        cur = {
+          index: s.gameIndex,
+          server: s.server,
+          serverPlayer: doubles ? (s.serverPlayer ?? 0) : 0,
+          receiverPlayer: doubles ? this.receiverPlayer(s) : 0,
+          score: [...s.score],
+          rallies: [],
+        };
+        games.push(cur);
+      }
+      const next = steps[i + 1];
+      if (!next || next.gameIndex !== s.gameIndex) continue;
+      // interval/resume snapshots repeat the score; only rallies advance it
+      if (next.score[0] + next.score[1] !== s.score[0] + s.score[1] + 1) continue;
+      const w = next.score[0] > s.score[0] ? 0 : 1;
+      cur.rallies.push({
+        winner: w,
+        player: doubles ? (next.serverPlayer ?? 0) : 0, // serves the next rally
+        value: next.score[w],
+      });
+      cur.score = [...next.score];
+    }
+    return games;
+  },
+
   /* Service court for the current server: 'R' when server's score is even. */
   serviceCourt(state) {
     return state.score[state.server] % 2 === 0 ? "R" : "L";

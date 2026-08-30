@@ -176,9 +176,10 @@
     <!-- server → receiver arrow, drawn across the whole court -->
     <svg id="serve-arrow" class="hidden" aria-hidden="true">
       <defs>
-        <marker id="arrow-head" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5"
+        <!-- markerUnits="strokeWidth": the head scales with #serve-line's width -->
+        <marker id="arrow-head" markerWidth="4" markerHeight="4" refX="3.2" refY="2"
                 orient="auto" markerUnits="strokeWidth">
-          <path d="M0,0 L7,3.5 L0,7 z" fill="#ffd54f"></path>
+          <path d="M0,0 L4,2 L0,4 z" fill="#ffd54f"></path>
         </marker>
       </defs>
       <line id="serve-line" marker-end="url(#arrow-head)"></line>
@@ -213,18 +214,49 @@
           <label class="radio"><input type="radio" name="ngReceiver" value="1"><span id="ngr1"></span></label>
         </fieldset>
       </div>
-      <div id="overlay-timer"></div>
       <div id="overlay-20s" class="hidden"></div>
+      <div id="overlay-timer"></div>
       <div id="overlay-buttons">
         <button id="overlay-action" class="primary"></button>
         <button id="overlay-close" class="secondary hidden" data-i18n="ui.close">Close</button>
       </div>
     </div>
   </div>
+
+</section>
+
+<!-- ===== Score sheet (match report) ===== -->
+<section id="sheet" class="screen hidden">
+  <div id="sheet-scroll">
+    <div id="sheet-page">
+      <div id="sheet-notebar">
+        <input type="text" id="note-input" autocomplete="off">
+        <button type="button" id="note-add" data-i18n="sheet.addNote">Add note</button>
+      </div>
+      <div id="sheet-doc"></div>
+    </div>
+  </div>
+  <div id="sheet-actions">
+    <button type="button" id="sheet-print" data-i18n="sheet.print">Print</button>
+    <button type="button" id="sheet-pdf" data-i18n="sheet.pdf">PDF</button>
+    <button type="button" id="sheet-back" data-i18n="sheet.back">Back</button>
+  </div>
+
+  <!-- the same sheet as a PDF, in the browser's own viewer -->
+  <div id="report" class="hidden">
+    <header id="report-bar">
+      <span id="report-title" data-i18n="ui.reportTitle">Match report</span>
+      <a id="report-download" download data-i18n="ui.download">Download</a>
+      <button type="button" id="report-close" data-i18n="ui.close">Close</button>
+    </header>
+    <iframe id="report-frame" title="Match report"></iframe>
+  </div>
 </section>
 
 <script src="i18n.js"></script>
 <script src="match.js"></script>
+<script src="sheet.js"></script>
+<script src="report.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

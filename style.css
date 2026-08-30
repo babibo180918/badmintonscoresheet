@@ -228,7 +228,7 @@ button.secondary { background: #e2e2da; color: var(--text); margin-top: 0.5rem; 
   position: absolute; inset: 0; width: 100%; height: 100%;
   z-index: 1; pointer-events: none;
 }
-#serve-line { stroke: var(--accent); stroke-width: 4; opacity: 0.95; }
+#serve-line { stroke: var(--accent); stroke-width: 7; stroke-linecap: round; opacity: 0.95; }
 
 /* small round correction buttons on the court lines */
 .swap-btn {
@@ -277,6 +277,150 @@ button.secondary { background: #e2e2da; color: var(--text); margin-top: 0.5rem; 
 
 #overlay-buttons { display: flex; gap: 0.8rem; }
 #overlay-buttons .secondary { margin-top: 0; }
+
+/* ===== Score sheet (match report) =====
+   A paper-style sheet: fixed 1120px wide (an A4 landscape page), scrolled
+   inside the screen and printed as-is. */
+#sheet { flex-direction: row; background: #fff; }
+#sheet-scroll { flex: 1; overflow: auto; padding: 0.6rem; }
+#sheet-page {
+  width: 1120px; color: #000; user-select: text;
+  font-family: Arial, Helvetica, system-ui, sans-serif;
+}
+#sheet-notebar { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+#note-input {
+  flex: 1; max-width: 40rem; font-size: 0.95rem; padding: 0.35rem 0.5rem;
+  border: 1px solid #999; border-radius: 0.25rem;
+}
+#note-add {
+  margin-top: 0; padding: 0.35rem 0.8rem; font-size: 0.9rem;
+  border: 1px solid #999; border-radius: 0.25rem; background: #eee; cursor: pointer;
+}
+
+/* action column, as on the reference sheet */
+#sheet-actions {
+  flex: none; width: 12rem; display: flex; flex-direction: column;
+  justify-content: center; gap: 2.5rem; padding: 1rem;
+}
+#sheet-actions button {
+  margin-top: 0; padding: 1.5rem 0.5rem; font-size: 1.6rem; font-weight: 400;
+  border: 1px solid #b5b5b5; border-radius: 0.2rem; background: #f0f0f0;
+  color: #000; cursor: pointer;
+}
+#sheet-actions button:active { background: #ddd; }
+
+/* --- header block --- */
+.sh-head { display: flex; align-items: flex-start; gap: 1.2rem; }
+.sh-left { width: 11rem; flex: none; padding-top: 3.6rem; }
+.sh-f { display: flex; align-items: flex-end; gap: 0.5rem; font-size: 0.85rem; min-height: 1.35rem; }
+.sh-f .lb { white-space: nowrap; }
+.sh-f .ln { flex: 1; border-bottom: 1px dotted #444; text-align: center; min-height: 1.1rem; }
+.sh-f .vl { font-size: 0.95rem; }
+.sh-left .vl { font-size: 1.05rem; }
+
+.sh-boxes { display: flex; align-items: flex-start; gap: 0.5rem; padding-top: 1.1rem; }
+.sh-teamwrap { position: relative; }
+/* the winner's box is ringed, as the umpire circles it on paper */
+.sh-teamwrap.winner::after {
+  content: ""; position: absolute; inset: -14px -22px;
+  border: 2.5px solid #000; border-radius: 50%; pointer-events: none;
+}
+.sh-team { border-collapse: collapse; table-layout: fixed; width: 19rem; }
+.sh-team td {
+  border: 1px solid #000; height: 2.1rem; padding: 0 0.4rem;
+  font-size: 0.95rem; overflow: hidden; white-space: nowrap;
+}
+.sh-team td.sh-end { width: 1.3rem; text-align: center; padding: 0; }
+.sh-team td.sh-club { font-size: 0.75rem; }
+.sh-team.shaded td { background: #e4e4e4; }
+
+.sh-scorecol { position: relative; display: flex; flex-direction: column; align-items: center; }
+/* the caption hangs above the box instead of sitting in the column's flow, so
+   the score rows stay level with the team boxes' name rows */
+.sh-scoretitle {
+  position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 0.15rem;
+  text-align: center; font-size: 0.8rem; line-height: 1;
+}
+.sh-score { border-collapse: collapse; table-layout: fixed; }
+.sh-score td {
+  border: 1px solid #000; width: 6.5rem; height: 2.1rem;
+  text-align: center; font-size: 1rem;
+}
+.sh-shuttles { margin-top: 0.5rem; font-size: 0.85rem; }
+.sh-shuttles b { margin-left: 0.4rem; font-weight: 400; font-size: 0.95rem; }
+.sh-right { margin-left: auto; width: 17rem; flex: none; }
+
+/* --- rally grid --- */
+.sh-grid { margin-top: 1.1rem; display: flex; flex-direction: column; gap: 0.45rem; }
+.sh-block { border-collapse: collapse; table-layout: fixed; width: 100%; }
+.sh-block td {
+  border: 1px solid #b9b9b9; height: 1.35rem; padding: 0;
+  text-align: center; font-size: 0.78rem; overflow: hidden;
+}
+.sh-block td.nm {
+  width: 9.5rem; text-align: left; padding-left: 0.25rem;
+  font-size: 0.75rem; white-space: nowrap; border-color: #000;
+}
+.sh-block td.mk { width: 1.2rem; border-color: #000; }
+.sh-block tr.shaded td.c, .sh-block tr.shaded td.fin { background: #e6e6e6; }
+.sh-block td.note { text-align: left; padding-left: 0.4rem; font-size: 0.85rem; }
+/* first/last row edges of a block are the block's own border */
+.sh-block tr:first-child td { border-top-color: #000; }
+.sh-block tr:last-child td { border-bottom-color: #000; }
+.sh-block td:first-child { border-left-color: #000; }
+.sh-block td:last-child { border-right-color: #000; }
+
+/* The game's final score: two numbers split by a diagonal, circled. The cell
+   spans the whole block, but the score pair sits around the block's middle so
+   the umpire's circle can close tightly round it rather than round the cell. */
+.sh-block td.fin { width: 4rem; position: relative; border-color: #000; }
+.sh-block td.fin .fa, .sh-block td.fin .fb { position: absolute; font-size: 0.8rem; line-height: 1; }
+.sh-block td.fin .fa { bottom: calc(50% + 0.05rem); left: 1rem; }
+.sh-block td.fin .fb { top: calc(50% + 0.2rem); right: 0.95rem; }
+/* the diagonal between them, bottom-left → top-right */
+.sh-block td.fin.circled::before {
+  content: ""; position: absolute; left: 0.9rem; right: 0.9rem; top: 50%;
+  border-top: 1.4px solid #000; transform: rotate(-11deg);
+}
+.sh-block td.fin.circled::after {
+  content: ""; position: absolute; left: 0.05rem; right: 0.05rem;
+  top: calc(50% - 1.3rem); height: 2.6rem;
+  border: 2px solid #000; border-radius: 50%; pointer-events: none;
+}
+
+.sh-sign { display: flex; justify-content: center; gap: 4rem; margin: 1.2rem auto 0; width: 60%; }
+.sh-sign .sh-f { flex: 1; }
+
+/* --- printing: the sheet alone, A4 landscape --- */
+@media print {
+  @page { size: A4 landscape; margin: 6mm; }
+  body { background: #fff; }
+  #sheet-actions, #sheet-notebar, #report { display: none !important; }
+  #sheet-scroll { overflow: visible; padding: 0; }
+  #sheet-page { width: 1050px; }
+  .sh-team.shaded td, .sh-block tr.shaded td.c, .sh-block tr.shaded td.fin {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+}
+
+/* ===== Match report (PDF viewer) ===== */
+#report {
+  position: fixed; inset: 0; z-index: 20; background: #333;
+  display: flex; flex-direction: column;
+}
+#report-bar {
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 0.6rem 0.9rem; background: var(--green); color: #fff;
+}
+#report-title { font-weight: 700; font-size: 1.05rem; margin-right: auto; }
+#report-bar a, #report-bar button {
+  margin-top: 0; padding: 0.45rem 0.9rem; font-size: 0.95rem; font-weight: 700;
+  border: 2px solid #fff; border-radius: 0.5rem;
+  background: transparent; color: #fff; cursor: pointer;
+  text-decoration: none; white-space: nowrap;
+}
+#report-bar a:active, #report-bar button:active { background: rgba(255, 255, 255, 0.2); }
+#report-frame { flex: 1; width: 100%; border: none; background: #555; }
 
 /* doubles, between games: next-game server/receiver pickers */
 #overlay-doubles { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; text-align: left; }

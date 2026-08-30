@@ -57,6 +57,7 @@ function applyStaticI18n(lang) {
   $("club0b").placeholder = t(lang, "ui.clubN", { n: 2 });
   $("club1").placeholder = t(lang, "ui.clubN", { n: doubles ? 3 : 2 });
   $("club1b").placeholder = t(lang, "ui.clubN", { n: 4 });
+  $("note-input").placeholder = t(lang, "sheet.notePlaceholder");
 }
 
 /* Club label for a side: singles → the club; doubles → the pair's clubs,
@@ -140,6 +141,8 @@ function tickOverlayWarmup() {
 function showSetup() {
   stopTimer();
   stopClock();
+  closeReport();
+  $("sheet").classList.add("hidden");
   $("match").classList.add("hidden");
   $("setup").classList.remove("hidden");
   startWarmupTicker();
@@ -163,7 +166,8 @@ function render() {
   renderZone($("zone-left"), left);
   renderZone($("zone-right"), right);
 
-  $("announcement-text").textContent = state.announcement;
+  $("announcement-text").textContent =
+    inTwentySeconds() ? twentySecondsCall() : state.announcement;
 
   // games summary in the top bar, e.g. "21-15 | 11-8"
   const parts = state.games.map(([a, b]) => `${a}-${b}`);
@@ -231,9 +235,10 @@ function renderArrow() {
   // quarter centre y: top quarter = 25%, bottom = 75% (renderZone's mapping)
   const y = (onLeft) => ((onLeft ? c === "L" : c === "R") ? "25%" : "75%");
   const line = $("serve-line");
-  line.setAttribute("x1", srvLeft ? "30%" : "70%");
+  // kept short and near the net so it does not run over the players' names
+  line.setAttribute("x1", srvLeft ? "38%" : "62%");
   line.setAttribute("y1", y(srvLeft));
-  line.setAttribute("x2", srvLeft ? "70%" : "30%");
+  line.setAttribute("x2", srvLeft ? "62%" : "38%");
   line.setAttribute("y2", y(!srvLeft));
 }
 
@@ -242,18 +247,23 @@ function renderOverlay() {
   // interval/break popups can be closed early; their timer then runs in the
   // yellow announcement bar instead
   const timed = state.phase === "interval" || state.phase === "between_games";
-  const inOverlay = (state.preMatch || timed || state.phase === "finished") &&
-    !(timed && state.overlayClosed);
+  const finished = state.phase === "finished";
+  // interval/break/match-over popups can all be closed
+  const closable = timed || finished;
+  const inOverlay = (state.preMatch || closable) && !(closable && state.overlayClosed);
   overlay.classList.toggle("hidden", !inOverlay);
   overlay.classList.toggle("pre-match", !!state.preMatch);
-  $("overlay-close").classList.toggle("hidden", !timed);
+  $("overlay-close").classList.toggle("hidden", !closable);
   if (!timed) $("announcement-timer").classList.add("hidden");
   // popup closed → its action button moves into the yellow bar
-  const dismissed = timed && state.overlayClosed;
+  // (timed: resume/next game — finished: the match report)
+  const dismissed = closable && state.overlayClosed;
   const barBtn = $("announcement-action");
   barBtn.classList.toggle("hidden", !dismissed);
   if (dismissed) {
-    barBtn.textContent = ui(state.phase === "interval" ? "resumePlay" : "startNextGame");
+    barBtn.textContent = ui(
+      finished ? "report" : state.phase === "interval" ? "resumePlay" : "startNextGame"
+    );
   }
   if (!inOverlay) {
     if (timed) startTimer(); else stopTimer();
@@ -281,13 +291,14 @@ function renderOverlay() {
     action.textContent = ui("resumePlay");
     // same call as the yellow bar, e.g. "11-6; interval"
     text.textContent = state.announcement;
-    text.classList.remove("hidden");
+    // last 20 s: only the "twenty seconds" call is shown, no score
+    text.classList.toggle("hidden", inTwentySeconds());
   } else if (state.phase === "between_games") {
     title.textContent = ui("betweenGamesTitle");
     action.textContent = ui("startNextGame");
     // "First set won by X" / score / "One game all" — built in match.js
     text.textContent = state.announcement;
-    text.classList.remove("hidden");
+    text.classList.toggle("hidden", inTwentySeconds());
     if (isDoubles()) {
       // winning side picks its next server, losing side its receiver
       const winner = state.gamesWon[0] > state.gamesWon[1] ? 0 : 1;
@@ -299,7 +310,9 @@ function renderOverlay() {
     }
   } else {
     title.textContent = ui("matchOverTitle");
-    action.textContent = ui("newMatch");
+    // match over: "Report" opens the PDF, "Close" leaves the final score up
+    // (a new match is started from the top bar)
+    action.textContent = ui("report");
     text.textContent = state.announcement; // "Match won by X" + game scores
     text.classList.remove("hidden");
   }
@@ -350,6 +363,15 @@ function twentySecondsCall() {
     : t(uiLang(), "call.twentySecondsShort");
 }
 
+/* True for the last 20 s of an interval / between-games break. During it the
+ * "twenty seconds" call is the only message shown — the score announcement
+ * makes way for it in both the popup and the yellow bar. */
+function inTwentySeconds() {
+  if (state.phase !== "interval" && state.phase !== "between_games") return false;
+  if (!state.timerEndsAt) return false;
+  return state.timerEndsAt - Date.now() <= 20 * 1000;
+}
+
 /* countdown for pre-match warm-up / interval / between-games.
  * Runs while the popup is open AND after it is closed early (the countdown
  * then shows in the yellow bar). At 0:00 the phase auto-advances exactly as
@@ -384,6 +406,12 @@ function startTimer() {
     el.classList.toggle("warning", show20);
     msg.classList.toggle("hidden", !show20);
     if (show20) msg.textContent = twentySecondsCall();
+    // the call replaces the score announcement in the popup and the yellow bar
+    if (state.phase === "interval" || state.phase === "between_games") {
+      $("overlay-text").classList.toggle("hidden", show20);
+      $("announcement-text").textContent =
+        show20 ? twentySecondsCall() : state.announcement;
+    }
     // popup closed early → countdown lives in the yellow bar instead
     barEl.classList.toggle("hidden", !state.overlayClosed);
     if (state.overlayClosed) {
@@ -462,15 +490,66 @@ function onOverlayAction() {
     render();
     return;
   }
-  if (state.phase === "finished") { clearSaved(); showSetup(); return; }
+  if (state.phase === "finished") { openSheet(); return; }
   advancePhase();
 }
 
-/* Close the interval/break popup early; the countdown moves to the yellow bar. */
+/* Close the popup: an interval/break countdown moves to the yellow bar, and
+ * after the match the bar keeps the final call plus the "Report" button. */
 function onOverlayClose() {
   state.overlayClosed = true;
   save();
   render();
+}
+
+/* ---------- match report: the score sheet ---------- */
+function openSheet() {
+  if (!state) return;
+  $("match").classList.add("hidden");
+  $("sheet").classList.remove("hidden");
+  Sheet.render(state, uiLang());
+}
+
+function closeSheet() {
+  closeReport();
+  $("sheet").classList.add("hidden");
+  $("match").classList.remove("hidden");
+}
+
+function onAddNote() {
+  const input = $("note-input");
+  const text = input.value.trim();
+  if (!text) return;
+  state.notes = [...(state.notes || []), text];
+  input.value = "";
+  save();
+  Sheet.render(state, uiLang());
+}
+
+/* ---------- the same sheet as a PDF ---------- */
+let reportUrl = null;
+
+function openReport() {
+  if (!state) return;
+  releaseReport();
+  const blob = new Blob([Report.build(state, uiLang())], { type: "application/pdf" });
+  reportUrl = URL.createObjectURL(blob);
+  const name = Report.fileName(state);
+  $("report-frame").src = reportUrl;
+  const dl = $("report-download");
+  dl.href = reportUrl;
+  dl.setAttribute("download", name);
+  $("report").classList.remove("hidden");
+}
+
+function closeReport() {
+  $("report").classList.add("hidden");
+  $("report-frame").removeAttribute("src");
+  releaseReport();
+}
+
+function releaseReport() {
+  if (reportUrl) { URL.revokeObjectURL(reportUrl); reportUrl = null; }
 }
 
 /* ---------- manual corrections on the court drawing ---------- */
@@ -586,6 +665,7 @@ function initSetup() {
     state = Match.create(config);
     // app-level pre-match fields: announcement popup + match clock
     state.shuttles = 1;
+    state.notes = [];
     state.preMatch = true;
     state.matchStartedAt = null;
     state.matchEndedAt = null;
@@ -705,8 +785,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // same action as the popup's button (don't let the tap reopen the popup)
   $("announcement-action").addEventListener("click", (e) => {
     e.stopPropagation();
-    advancePhase();
+    if (state.phase === "finished") openSheet(); else advancePhase();
   });
+  // score sheet: print it, export it as PDF, or go back to the match
+  $("sheet-print").addEventListener("click", () => window.print());
+  $("sheet-pdf").addEventListener("click", openReport);
+  $("sheet-back").addEventListener("click", closeSheet);
+  $("note-add").addEventListener("click", onAddNote);
+  $("note-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); onAddNote(); }
+  });
+  $("report-close").addEventListener("click", closeReport);
+  // the download link must not fall through to the bar/popup underneath
+  $("report-download").addEventListener("click", (e) => e.stopPropagation());
 
   const saved = load();
   if (saved && saved.phase !== "finished") {

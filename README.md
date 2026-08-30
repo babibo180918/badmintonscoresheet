@@ -19,6 +19,9 @@ Offline-first PWA, no framework, no build step — plain HTML/CSS/JS.
 - Official BWF announcement wording shown after every rally
   (service over, interval, change ends, game/match point, game/match won)
 - 11-point interval and between-games countdown timers
+- End-of-match PDF report (players, clubs, per-game scores, duration, shuttles,
+  winner circled) shown in an in-app viewer and downloadable — generated
+  offline, no dependencies
 - Match state survives app/tab restarts (localStorage)
 - Installable as a PWA; works fully offline after first load
 - Three languages — English, Tiếng Việt, Dansk — covering both the UI and
@@ -58,6 +61,7 @@ clients pick up the update.
 |---|---|
 | `index.html` | Setup screen + match screen markup |
 | `match.js` | Pure match logic (state machine, announcements) — no DOM |
+| `report.js` | Hand-built PDF match report (A4, base-14 fonts) — no DOM |
 | `app.js` | Rendering, event wiring, localStorage, SW registration |
 | `i18n.js` | All user-facing strings; add languages here |
 | `style.css` | Tablet-first UI |

@@ -2,13 +2,15 @@
  * Bump CACHE_VERSION whenever any listed file changes, or clients keep
  * the old version.
  */
-const CACHE_VERSION = "badmintonscoresheet-v21";
+const CACHE_VERSION = "badmintonscoresheet-v26";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./i18n.js",
   "./match.js",
+  "./sheet.js",
+  "./report.js",
   "./app.js",
   "./manifest.json",
   "./icon.svg",
